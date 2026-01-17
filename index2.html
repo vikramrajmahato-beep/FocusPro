@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Web Step Counter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding-top: 50px;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+    }
+    h1 {
+      font-size: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>🚶 Web Step Counter</h2>
+<h1 id="steps">0</h1>
+<button onclick="startCounter()">Start Counting</button>
+
+<script>
+let steps = 0;
+let lastMagnitude = 0;
+let threshold = 15;
+
+function startCounter() {
+  if (typeof DeviceMotionEvent.requestPermission === 'function') {
+    // iOS permission
+    DeviceMotionEvent.requestPermission()
+      .then(permission => {
+        if (permission === 'granted') {
+          startListening();
+        }
+      });
+  } else {
+    // Android
+    startListening();
+  }
+}
+
+function startListening() {
+  window.addEventListener("devicemotion", function(event) {
+    let x = event.accelerationIncludingGravity.x;
+    let y = event.accelerationIncludingGravity.y;
+    let z = event.accelerationIncludingGravity.z;
+
+    let magnitude = Math.sqrt(x*x + y*y + z*z);
+    let diff = Math.abs(magnitude - lastMagnitude);
+
+    if (diff > threshold) {
+      steps++;
+      document.getElementById("steps").innerText = steps;
+    }
+
+    lastMagnitude = magnitude;
+  });
+}
+</script>
+
+</body>
+</html>
