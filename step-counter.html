@@ -12,6 +12,7 @@
     button {
       padding: 12px 20px;
       font-size: 16px;
+      margin-top: 15px;
     }
     h1 {
       font-size: 40px;
@@ -22,19 +23,76 @@
 
 <h2>🚶 Web Step Counter</h2>
 <h1 id="steps">0</h1>
-<button onclick="startCounter()">Start Counting</button>
+
+<button id="permissionBtn">Allow Motion Sensor</button>
+
+<p id="status"></p>
 
 <script>
 let steps = 0;
 let lastMagnitude = 0;
 let threshold = 15;
+let listening = false;
 
-function startCounter() {
-  if (typeof DeviceMotionEvent.requestPermission === 'function') {
-    // iOS permission
+document.getElementById("permissionBtn").addEventListener("click", requestPermission);
+
+function requestPermission() {
+  if (typeof DeviceMotionEvent !== "undefined" &&
+      typeof DeviceMotionEvent.requestPermission === "function") {
+
+    // iOS Safari
     DeviceMotionEvent.requestPermission()
-      .then(permission => {
-        if (permission === 'granted') {
+      .then(response => {
+        if (response === "granted") {
+          startListening();
+        } else {
+          document.getElementById("status").innerText =
+            "Permission denied ❌";
+        }
+      })
+      .catch(() => {
+        document.getElementById("status").innerText =
+          "Permission request failed ❌";
+      });
+
+  } else {
+    // Android & other browsers
+    startListening();
+  }
+}
+
+function startListening() {
+  if (listening) return;
+  listening = true;
+
+  document.getElementById("status").innerText =
+    "Motion sensor enabled ✅";
+
+  window.addEventListener("devicemotion", handleMotion);
+}
+
+function handleMotion(event) {
+  let acc = event.accelerationIncludingGravity;
+  if (!acc) return;
+
+  let x = acc.x || 0;
+  let y = acc.y || 0;
+  let z = acc.z || 0;
+
+  let magnitude = Math.sqrt(x*x + y*y + z*z);
+  let diff = Math.abs(magnitude - lastMagnitude);
+
+  if (diff > threshold) {
+    steps++;
+    document.getElementById("steps").innerText = steps;
+  }
+
+  lastMagnitude = magnitude;
+}
+</script>
+
+</body>
+</html>        if (permission === 'granted') {
           startListening();
         }
       });
